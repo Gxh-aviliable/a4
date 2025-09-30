@@ -41,7 +41,7 @@ def precompute_rotary_emb(dim, max_positions):
     assert dim % 2  ==0 ,"dim必须是偶数以应对RoPE"
     # i: 0..dim//2-1
     i=torch.arange(dim/2,dtype=torch.float32)  #(dim/2,)
-    thetas=1/10000^(-2*i/float(dim)) # (dim/2,)
+    thetas=1/10000**(2*i/float(dim)) # (dim/2,)
     t=torch.arange(max_positions,dtype=32)#(T,)
     angles = t.unsqueeze(1) * thetas.unsqueeze(0)  # (T, d//2) #(T,dim/2)
     cos=torch.cos(angles) #(T,d/2)
@@ -115,12 +115,12 @@ class CausalSelfAttention(nn.Module):
             # TODO: [part g] Precompute the cos and sin values for RoPE and
             # store them in rope_cache.
             # Hint: The maximum sequence length is given by config.block_size.
-            rope_cache = None
+            
             ### YOUR CODE HERE ###
-            pass
+            self.rope_cache = precompute_rotary_emb(config.n_embd//config.n_head,config.block_size)
             ### END YOUR CODE ###
 
-            self.register_buffer("rope_cache", rope_cache)
+            self.register_buffer("rope_cache", self.rope_cache)
 
         # regularization
         self.attn_drop = nn.Dropout(config.attn_pdrop)
@@ -143,7 +143,8 @@ class CausalSelfAttention(nn.Module):
         if self.rope:
             # TODO: [part g] Apply RoPE to the query and key.
             ### YOUR CODE HERE ###
-            pass
+            q=apply_rotary_emb(q,self.rope_cache)
+            k=apply_rotary_emb(k,self.rope_cache)
             ### END YOUR CODE ###
 
         # causal self-attention; Self-attend: (B, nh, T, hs) x (B, nh, hs, T) -> (B, nh, T, T)

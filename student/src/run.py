@@ -103,7 +103,11 @@ def main():
         # writer=writer
 
         ### YOUR CODE HERE ###
-        pass
+        tconf=trainer.TrainerConfig(max_epochs=650, batch_size=128 , learning_rate=args.pretrain_lr, lr_decay=True, warmup_tokens=512*20, 
+                                    final_tokens=650*len(pretrain_dataset)*block_size, num_workers=4, writer=writer,ckpt_path=args.writing_params_path)
+        pre_trainer=trainer.Trainer(model,pretrain_dataset,None,tconf)
+        pre_trainer.train()
+        pre_trainer.save_checkpoint()
         ### END YOUR CODE ###
     elif args.function == 'finetune':
         assert args.writing_params_path is not None
