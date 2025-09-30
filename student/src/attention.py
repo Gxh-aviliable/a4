@@ -34,11 +34,21 @@ def precompute_rotary_emb(dim, max_positions):
     the cos and sin values for each position and each dimension of
     the embedding.
     """
-
+    #使用纯粹的张量计算，来提升速度
     rope_cache = None
     # TODO: [part g]
     ### YOUR CODE HERE ###
-    pass
+    assert dim % 2  ==0 ,"dim必须是偶数以应对RoPE"
+    # i: 0..dim//2-1
+    i=torch.arange(dim/2,dtype=torch.float32)  #(dim/2,)
+    thetas=1/10000^(-2*i/float(dim)) # (dim/2,)
+    t=torch.arange(max_positions,dtype=32)#(T,)
+    angles = t.unsqueeze(1) * thetas.unsqueeze(0)  # (T, d//2) #(T,dim/2)
+    cos=torch.cos(angles) #(T,d/2)
+    sin=torch.sin(angles)
+
+    rope_cache = torch.stack([cos,sin],dim=-1)
+
     ### END YOUR CODE ###
     return rope_cache
 
