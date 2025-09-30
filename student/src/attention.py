@@ -65,10 +65,31 @@ def apply_rotary_emb(x, rope_cache):
     # Note that during inference, the length of the sequence might be different
     # from the length of the precomputed values. In this case, you should use
     # truncate the precomputed values to match the length of the sequence.
-
     rotated_x = None
-    ### YOUR CODE HERE ###
-    pass
+    assert x.size(-1)%2 ==0 ,"x的最后一个维度必须是偶数"
+    D=x.size(-1)
+    T_x=x.size(-2)#推理时的序列长度
+    T_rope=rope_cache.size(0)
+    T_used=min(T_x,T_rope)
+    #准备旋转因子
+    rc = rope_cache[:T_used].contiguous()#.contiguous是为了把不连续的张量变为连续的张量
+    rc_ro=torch.view_as_complex(rc)# cosx +isinx 从[T,d/2,2]变为了[T,d/2]
+    rc_ro=rc_ro.to(x.device)
+    #在处理x
+    x_head = x[...,:T_used,:]#[...,T,d]
+    x_pair =x_head.contiguous().reshape(*x_head.shape[:-1],D//2,2)
+    rc_x=torch.view_as_complex(x_pair)
+    rotated_complex = rc_x*rc_ro #变为 [b,nh,T,d/2]
+
+    #在变回实部
+    rotated_real =torch.view_as_real(rotated_complex)#[b,nh,T,d/2,2]
+    rotated_x_head =rotated_real.reshape(*rotated_real.shape[:-2],D)
+
+    if  T_used < T_x :
+        rotated_x =torch.cat([rotated_x_head,x[...,T_used:,:]],dim=-2)
+    else :
+        rotated_x=rotated_x_head
+
     ### END YOUR CODE ###
     return rotated_x
 
