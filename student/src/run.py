@@ -73,7 +73,9 @@ def main():
         # TODO: [part g] Make some other model here
         # set mconf.rope parameter
         ### YOUR CODE HERE ###
-        pass
+        mconf.rope = True #打开rope开关
+        model = models.GPT(mconf)
+        model = model.to(device)
         ### END YOUR CODE ###
     else:
         raise ValueError("Unknown model variant")
